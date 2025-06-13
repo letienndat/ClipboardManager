@@ -8,7 +8,32 @@
 
 /* Begin PBXFileReference section */
 		4A0AFD972DFC167F004A2D03 /* ClipboardManager.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ClipboardManager.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		4A0AFDC32DFC2842004A2D03 /* ClipboardManagerHelper.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ClipboardManagerHelper.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		4A0AFDDB2DFC2944004A2D03 /* Exceptions for "ClipboardManagerHelper" folder in "ClipboardManager" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				"/Localized: Main.storyboard",
+				Assets.xcassets,
+			);
+			target = 4A0AFD962DFC167F004A2D03 /* ClipboardManager */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
+/* Begin PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet section */
+		4A0AFDDC2DFC2944004A2D03 /* Exceptions for "ClipboardManagerHelper" folder in "Copy Bundle Resources" phase from "ClipboardManager" target */ = {
+			isa = PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet;
+			buildPhase = 4A0AFD952DFC167F004A2D03 /* Resources */;
+			membershipExceptions = (
+				AppDelegate.swift,
+				ClipboardManagerHelper.entitlements,
+				HelperAppDelegate.swift,
+				ViewController.swift,
+			);
+		};
+/* End PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		4A0AFD992DFC167F004A2D03 /* ClipboardManager */ = {
@@ -16,10 +41,26 @@
 			path = ClipboardManager;
 			sourceTree = "<group>";
 		};
+		4A0AFDC42DFC2842004A2D03 /* ClipboardManagerHelper */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				4A0AFDDB2DFC2944004A2D03 /* Exceptions for "ClipboardManagerHelper" folder in "ClipboardManager" target */,
+				4A0AFDDC2DFC2944004A2D03 /* Exceptions for "ClipboardManagerHelper" folder in "Copy Bundle Resources" phase from "ClipboardManager" target */,
+			);
+			path = ClipboardManagerHelper;
+			sourceTree = "<group>";
+		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
 		4A0AFD942DFC167F004A2D03 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		4A0AFDC02DFC2842004A2D03 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -33,6 +74,7 @@
 			isa = PBXGroup;
 			children = (
 				4A0AFD992DFC167F004A2D03 /* ClipboardManager */,
+				4A0AFDC42DFC2842004A2D03 /* ClipboardManagerHelper */,
 				4A0AFD982DFC167F004A2D03 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -41,6 +83,7 @@
 			isa = PBXGroup;
 			children = (
 				4A0AFD972DFC167F004A2D03 /* ClipboardManager.app */,
+				4A0AFDC32DFC2842004A2D03 /* ClipboardManagerHelper.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -70,6 +113,28 @@
 			productReference = 4A0AFD972DFC167F004A2D03 /* ClipboardManager.app */;
 			productType = "com.apple.product-type.application";
 		};
+		4A0AFDC22DFC2842004A2D03 /* ClipboardManagerHelper */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 4A0AFDCF2DFC2844004A2D03 /* Build configuration list for PBXNativeTarget "ClipboardManagerHelper" */;
+			buildPhases = (
+				4A0AFDBF2DFC2842004A2D03 /* Sources */,
+				4A0AFDC02DFC2842004A2D03 /* Frameworks */,
+				4A0AFDC12DFC2842004A2D03 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				4A0AFDC42DFC2842004A2D03 /* ClipboardManagerHelper */,
+			);
+			name = ClipboardManagerHelper;
+			packageProductDependencies = (
+			);
+			productName = ClipboardManagerHelper;
+			productReference = 4A0AFDC32DFC2842004A2D03 /* ClipboardManagerHelper.app */;
+			productType = "com.apple.product-type.application";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -81,6 +146,9 @@
 				LastUpgradeCheck = 1620;
 				TargetAttributes = {
 					4A0AFD962DFC167F004A2D03 = {
+						CreatedOnToolsVersion = 16.2;
+					};
+					4A0AFDC22DFC2842004A2D03 = {
 						CreatedOnToolsVersion = 16.2;
 					};
 				};
@@ -100,6 +168,7 @@
 			projectRoot = "";
 			targets = (
 				4A0AFD962DFC167F004A2D03 /* ClipboardManager */,
+				4A0AFDC22DFC2842004A2D03 /* ClipboardManagerHelper */,
 			);
 		};
 /* End PBXProject section */
@@ -112,10 +181,24 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		4A0AFDC12DFC2842004A2D03 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		4A0AFD932DFC167F004A2D03 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		4A0AFDBF2DFC2842004A2D03 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -257,6 +340,7 @@
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_LSUIElement = YES;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -284,6 +368,7 @@
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_LSUIElement = YES;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -291,6 +376,60 @@
 				);
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.datlt.ClipboardManager;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+		4A0AFDD02DFC2844004A2D03 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = ClipboardManagerHelper/ClipboardManagerHelper.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 2C5DNYDK64;
+				ENABLE_HARDENED_RUNTIME = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				INFOPLIST_KEY_NSMainStoryboardFile = Main;
+				INFOPLIST_KEY_NSPrincipalClass = NSApplication;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.datlt.ClipboardManagerHelper;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		4A0AFDD12DFC2844004A2D03 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = ClipboardManagerHelper/ClipboardManagerHelper.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 2C5DNYDK64;
+				ENABLE_HARDENED_RUNTIME = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				INFOPLIST_KEY_NSMainStoryboardFile = Main;
+				INFOPLIST_KEY_NSPrincipalClass = NSApplication;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.datlt.ClipboardManagerHelper;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
@@ -314,6 +453,15 @@
 			buildConfigurations = (
 				4A0AFDA72DFC1681004A2D03 /* Debug */,
 				4A0AFDA82DFC1681004A2D03 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		4A0AFDCF2DFC2844004A2D03 /* Build configuration list for PBXNativeTarget "ClipboardManagerHelper" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				4A0AFDD02DFC2844004A2D03 /* Debug */,
+				4A0AFDD12DFC2844004A2D03 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
