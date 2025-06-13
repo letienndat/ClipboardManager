@@ -15,9 +15,9 @@ struct ContentView: View {
         ScrollView {
             LazyVStack(spacing: 12) {
                 ForEach(
-                    Array(clipboardManager.clipboardItems.enumerated()),
-                    id: \.offset
-                ) { _, item in
+                    Array(clipboardManager.clipboardItems),
+                    id: \.id
+                ) { item in
                     ExpandableTextView(
                         item: item,
                         onCopy: {
@@ -35,7 +35,7 @@ struct ContentView: View {
             .padding()
         }
         .overlay(
-            Text("No items yet").opacity(
+            Text("No items").opacity(
                 clipboardManager.clipboardItems.isEmpty ? 1 : 0)
         )
         .background(Color.gray.opacity(0.2))
@@ -52,15 +52,17 @@ struct ExpandableTextView: View {
         HStack(spacing: 5) {
             if let text = item.content as? String {
                 Text(text)
-                    .textSelection(.enabled)
+                    .lineLimit(5)
+                    .truncationMode(.tail)
                     .frame(maxWidth: .infinity, alignment: .leading)
             } else if let image = item.content as? NSImage {
                 Image(nsImage: image)
                     .resizable()
                     .scaledToFit()
                     .frame(
-                        maxWidth: .infinity, maxHeight: 300, alignment: .leading
+                        maxWidth: .infinity, alignment: .leading
                     )
+                    .shadow(color: .black.opacity(0.2), radius: 5, x: 0, y: 0)
             }
 
             Spacer()
@@ -72,6 +74,6 @@ struct ExpandableTextView: View {
                 Spacer()
             }
         }
-        .frame(maxWidth: .infinity)
+        .frame(maxWidth: .infinity, maxHeight: 200)
     }
 }
