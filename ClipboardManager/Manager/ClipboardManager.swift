@@ -30,17 +30,7 @@ class ClipboardManager: ObservableObject {
             {
                 if let string = pasteboard.string(forType: .string) {
                     DispatchQueue.main.async {
-                        if self.clipboardItems.isEmpty
-                            || self.clipboardItems[0].content as? String
-                                != string
-                        {
-                            self.clipboardItems.insert(
-                                ClipboardItem(content: string), at: 0)
-                            if self.clipboardItems.count > 50 {
-                                self.clipboardItems.removeLast()
-                            }
-                            print("New clipboard item (text): \(string)")
-                        }
+                        self.copyItem(ClipboardItem(content: string))
                     }
                 } else {
 
@@ -56,17 +46,7 @@ class ClipboardManager: ObservableObject {
                         let image = images.first
                     {
                         DispatchQueue.main.async {
-                            if self.clipboardItems.isEmpty
-                                || self.clipboardItems[0].content as? NSImage
-                                    != image
-                            {
-                                self.clipboardItems.insert(
-                                    ClipboardItem(content: image), at: 0)
-                                if self.clipboardItems.count > 50 {
-                                    self.clipboardItems.removeLast()
-                                }
-                                print("New clipboard item (image)")
-                            }
+                            self.copyItem(ClipboardItem(content: image))
                         }
                     }
                 }
@@ -79,13 +59,38 @@ class ClipboardManager: ObservableObject {
         let pasteboard = NSPasteboard.general
         self.isCopying = true
         pasteboard.clearContents()
+
         if let text = item.content as? String {
             pasteboard.setString(text, forType: .string)
             print("Copied to clipboard (text): \(text)")
+
+            clipboardItems.removeAll(where: {
+                if let existingText = $0.content as? String {
+                    return existingText == text
+                }
+                return false
+            })
+
         } else if let image = item.content as? NSImage {
             pasteboard.writeObjects([image])
             print("Copied to clipboard (image)")
+
+            clipboardItems.removeAll(where: {
+                if let existingImage = $0.content as? NSImage {
+                    return existingImage.tiffRepresentation
+                        == image.tiffRepresentation
+                }
+                return false
+            })
         }
+
+        clipboardItems.insert(item, at: 0)
+
+        if clipboardItems.count > AppConst.numberOfItems {
+            clipboardItems.removeLast(
+                clipboardItems.count - AppConst.numberOfItems)
+        }
+
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
             self.isCopying = false
         }
