@@ -37,7 +37,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         registerGlobalHotkey()
     }
 
-    @objc func togglePopover() {
+    @objc
+    func togglePopover() {
         if let button = statusItem?.button, let popover = popover {
             if popover.isShown {
                 popover.performClose(nil)
@@ -53,8 +54,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     func registerGlobalHotkey() {
         let hotKeyID = EventHotKeyID(
             signature: UInt32("swif".fourCharCodeValue), id: 1)
-        let modifierFlags: UInt32 = UInt32(cmdKey | shiftKey)
-        let keyCode: UInt32 = UInt32(kVK_ANSI_V)
+        let modifierFlags = UInt32(cmdKey | shiftKey)
+        let keyCode = UInt32(kVK_ANSI_V)
 
         var hotKeyRef: EventHotKeyRef?
         let eventTarget = GetApplicationEventTarget()
@@ -81,11 +82,12 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         let handler:
             @convention(c) (
                 EventHandlerCallRef?, EventRef?, UnsafeMutableRawPointer?
-            ) -> OSStatus = { (nextHandler, event, userData) -> OSStatus in
+            ) -> OSStatus = { (_, _, userData) -> OSStatus in
                 if let userData = userData {
                     let appDelegate = Unmanaged<AppDelegate>.fromOpaque(
                         userData
-                    ).takeUnretainedValue()
+                    )
+                        .takeUnretainedValue()
                     appDelegate.togglePopover()
                 }
                 return noErr

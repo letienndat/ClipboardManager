@@ -14,20 +14,18 @@ class ClipboardManager: ObservableObject {
     private var timer: Timer?
     private var lastChangeCount: Int = 0
     private var isCopying = false
+    private let pasteboard = NSPasteboard.general
 
     init() {
         startMonitoring()
     }
 
     func startMonitoring() {
-        let pasteboard = NSPasteboard.general
         lastChangeCount = pasteboard.changeCount
 
-        timer = Timer.scheduledTimer(withTimeInterval: 0.5, repeats: true) {
-            [weak self] _ in
+        timer = Timer.scheduledTimer(withTimeInterval: 0.5, repeats: true) {  [weak self] _ in
             guard let self = self else { return }
-            if pasteboard.changeCount != self.lastChangeCount && !self.isCopying
-            {
+            if pasteboard.changeCount != self.lastChangeCount && !self.isCopying {
                 if let string = pasteboard.string(forType: .string) {
                     DispatchQueue.main.async {
                         self.copyItem(ClipboardItem(content: string))
@@ -43,8 +41,7 @@ class ClipboardManager: ObservableObject {
                     ]
                     if let images = pasteboard.readObjects(
                         forClasses: classes, options: options) as? [NSImage],
-                        let image = images.first
-                    {
+                        let image = images.first {
                         DispatchQueue.main.async {
                             self.copyItem(ClipboardItem(content: image))
                         }
@@ -56,7 +53,6 @@ class ClipboardManager: ObservableObject {
     }
 
     func copyItem(_ item: ClipboardItem) {
-        let pasteboard = NSPasteboard.general
         self.isCopying = true
         pasteboard.clearContents()
 
@@ -70,7 +66,6 @@ class ClipboardManager: ObservableObject {
                 }
                 return false
             })
-
         } else if let image = item.content as? NSImage {
             pasteboard.writeObjects([image])
             print("Copied to clipboard (image)")
