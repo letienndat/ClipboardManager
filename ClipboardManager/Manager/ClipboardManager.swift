@@ -8,6 +8,11 @@
 import AppKit
 import UniformTypeIdentifiers
 
+enum FileOperationResult {
+    case success(String)
+    case failure(String)
+}
+
 class ClipboardManager: ObservableObject {
     @Published var clipboardItems: [ClipboardItem] = []
     private var timer: Timer?
@@ -16,40 +21,16 @@ class ClipboardManager: ObservableObject {
     private let pasteboard = NSPasteboard.general
     private var lastContent: String?
     private var justSetClipboard = false
-    private let clipboardDirName = "ClipboardManager"
-    private let jsonFileName = "clipboard.json"
-    private let logFileName = "clipboard_manager.log"
-
-    // Format in log
-    private let logDateFormatter: DateFormatter = {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "yyyy-MM-dd HH:mm:ss"
-        formatter.timeZone = TimeZone.current
-        return formatter
-    }()
-
-    // Format timestamp in UI and log
-    private let dateFormatter: DateFormatter = {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "HH:mm:ss dd:MM:yyyy"
-        formatter.timeZone = TimeZone.current
-        return formatter
-    }()
 
     // Folder path ~/ClipboardManager/
     private var clipboardDirURL: URL {
         FileManager.default.homeDirectoryForCurrentUser
-            .appendingPathComponent(clipboardDirName)
+            .appendingPathComponent(AppConst.clipboardDirName)
     }
 
     // File path file clipboard.json
-    private var fileURL: URL {
-        clipboardDirURL.appendingPathComponent(jsonFileName)
-    }
-
-    // File path clipboard_manager.log
-    private var logFileURL: URL {
-        clipboardDirURL.appendingPathComponent(logFileName)
+    private  var fileJSONURL: URL {
+        clipboardDirURL.appendingPathComponent(AppConst.jsonFileName)
     }
 
     init() {
@@ -68,35 +49,10 @@ class ClipboardManager: ObservableObject {
                     withIntermediateDirectories: true,
                     attributes: nil
                 )
-                log("Created directory: \(clipboardDirURL.path)")
+                Log.log("Created directory: \(clipboardDirURL.path)")
             }
         } catch {
-            log("Error creating directory \(clipboardDirURL.path): \(error)")
-        }
-    }
-
-    private func log(_ message: String) {
-        let timestamp = logDateFormatter.string(from: Date())
-        let logLine = "[\(timestamp)] \(message)\n"
-
-        do {
-            let fileHandle = try FileHandle(forWritingTo: logFileURL)
-            if #available(macOS 10.15, *) {
-                try fileHandle.seekToEnd()
-            } else {
-                fileHandle.seekToEndOfFile()
-            }
-            if let data = logLine.data(using: .utf8) {
-                fileHandle.write(data)
-            }
-            try fileHandle.close()
-        } catch {
-            do {
-                try logLine.write(
-                    to: logFileURL, atomically: true, encoding: .utf8)
-            } catch {
-                log("Failed to write log to \(logFileURL.path): \(error)")
-            }
+            Log.log("Error creating directory \(clipboardDirURL.path): \(error)")
         }
     }
 
@@ -153,8 +109,8 @@ class ClipboardManager: ObservableObject {
                 var updatedItem = firstItem
                 updatedItem.updateTimestamp(Date())
                 clipboardItems[0] = updatedItem
-                log(
-                    "Updated timestamp for existing text: \"\(text)\" to \(dateFormatter.string(from: updatedItem.timestamp))"
+                Log.log(
+                    "Updated timestamp for existing text: \"\(text)\" to \(updatedItem.timestamp.formatToString())"
                 )
             } else {
                 pasteboard.clearContents()
@@ -171,13 +127,13 @@ class ClipboardManager: ObservableObject {
                     updatedItem.updateTimestamp(Date())
                     clipboardItems.remove(at: index)
                     clipboardItems.insert(updatedItem, at: 0)
-                    log(
-                        "Updated existing text: \"\(text)\" with new timestamp: \(dateFormatter.string(from: updatedItem.timestamp))"
+                    Log.log(
+                        "Updated existing text: \"\(text)\" with new timestamp: \(updatedItem.timestamp.formatToString())"
                     )
                 } else {
                     clipboardItems.insert(item, at: 0)
-                    log(
-                        "Copied new text: \"\(text)\" with timestamp: \(dateFormatter.string(from: item.timestamp))"
+                    Log.log(
+                        "Copied new text: \"\(text)\" with timestamp: \(item.timestamp.formatToString())"
                     )
                 }
             }
@@ -193,8 +149,8 @@ class ClipboardManager: ObservableObject {
                     var updatedItem = firstItem
                     updatedItem.updateTimestamp(Date())
                     clipboardItems[0] = updatedItem
-                    log(
-                        "Updated timestamp for existing image to \(dateFormatter.string(from: updatedItem.timestamp))"
+                    Log.log(
+                        "Updated timestamp for existing image to \(updatedItem.timestamp.formatToString())"
                     )
                 } else {
                     pasteboard.clearContents()
@@ -212,13 +168,13 @@ class ClipboardManager: ObservableObject {
                         updatedItem.updateTimestamp(Date())
                         clipboardItems.remove(at: index)
                         clipboardItems.insert(updatedItem, at: 0)
-                        log(
-                            "Updated existing image with new timestamp: \(dateFormatter.string(from: updatedItem.timestamp))"
+                        Log.log(
+                            "Updated existing image with new timestamp: \(updatedItem.timestamp.formatToString())"
                         )
                     } else {
                         clipboardItems.insert(item, at: 0)
-                        log(
-                            "Copied new image with timestamp: \(dateFormatter.string(from: item.timestamp))"
+                        Log.log(
+                            "Copied new image with timestamp: \(item.timestamp.formatToString())"
                         )
                     }
                 }
@@ -234,49 +190,178 @@ class ClipboardManager: ObservableObject {
         }
     }
 
-    func loadItems() {
+    @discardableResult
+    func loadItems() -> FileOperationResult {
         do {
-            if FileManager.default.fileExists(atPath: fileURL.path) {
-                let data = try Data(contentsOf: fileURL)
+            if FileManager.default.fileExists(atPath: fileJSONURL.path) {
+                let data = try Data(contentsOf: fileJSONURL)
                 let decoder = JSONDecoder()
+
                 decoder.dateDecodingStrategy = .custom { decoder in
                     let container = try decoder.singleValueContainer()
                     let dateString = try container.decode(String.self)
-                    let formatter = DateFormatter()
-                    formatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ssZ"
-                    formatter.timeZone = TimeZone.current
-                    if let date = formatter.date(from: dateString) {
+
+                    let date = Date.loadFormatedWithString(dateString: dateString)
+                    if let date {
                         return date
                     }
+
                     throw DecodingError.dataCorruptedError(
-                        in: container, debugDescription: "Invalid date format")
+                        in: container,
+                        debugDescription: "Invalid date format"
+                    )
                 }
-                self.clipboardItems = try decoder.decode(
-                    [ClipboardItem].self, from: data)
-                log("Loaded \(clipboardItems.count) items from JSON")
+
+                var clipboardItemsLoaded = try decoder.decode([ClipboardItem].self, from: data).sorted(by: { $0.timestamp > $1.timestamp })
+                if clipboardItemsLoaded.count > AppConst.numberOfItems {
+                    clipboardItemsLoaded.removeLast(
+                        clipboardItemsLoaded.count - AppConst.numberOfItems)
+                }
+                self.clipboardItems = clipboardItemsLoaded
+                let message = "Loaded \(clipboardItems.count) items from \(fileJSONURL.relativePath)"
+                Log.log(message)
+                return .success(message)
+            } else {
+                self.clipboardItems = []
+                let message = "No JSON file found at \(fileJSONURL.relativePath)"
+                Log.log(message)
+                return .success(message)
             }
         } catch {
-            log("Error loading JSON: \(error)")
+            let errorMessage = "Error loading JSON from \(fileJSONURL.relativePath): \(error.localizedDescription)"
+            Log.log(errorMessage)
             self.clipboardItems = []
+            return .failure(errorMessage)
         }
     }
 
     func saveItems() {
         do {
             let encoder = JSONEncoder()
+
             encoder.dateEncodingStrategy = .custom { date, encoder in
                 var container = encoder.singleValueContainer()
                 let formatter = DateFormatter()
-                formatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ssZ"
-                formatter.timeZone = TimeZone.current
+                formatter.configFormatLoadStringDate()
                 try container.encode(formatter.string(from: date))
             }
+
             encoder.outputFormatting = .prettyPrinted
             let data = try encoder.encode(clipboardItems)
-            try data.write(to: fileURL, options: .atomic)
-            log("Saved \(clipboardItems.count) items to JSON")
+            try data.write(to: fileJSONURL, options: .atomic)
+
+            Log.log("Saved \(clipboardItems.count) items to JSON")
         } catch {
-            log("Error saving JSON: \(error)")
+            Log.log("Error saving JSON: \(error)")
         }
+    }
+
+    func exportJSON() -> FileOperationResult {
+        let panel = NSSavePanel()
+        panel.allowedContentTypes = [.json]
+        panel.nameFieldStringValue = "clipboard_export.json"
+        panel.canCreateDirectories = true
+        panel.title = "Export Clipboard Items"
+
+        if panel.runModal() == .OK, let url = panel.url {
+            do {
+                let encoder = JSONEncoder()
+                encoder.dateEncodingStrategy = .custom { date, encoder in
+                    var container = encoder.singleValueContainer()
+                    let formatter = DateFormatter()
+                    formatter.configFormatLoadStringDate()
+                    try container.encode(formatter.string(from: date))
+                }
+                encoder.outputFormatting = .prettyPrinted
+                let data = try encoder.encode(clipboardItems)
+                try data.write(to: url, options: .atomic)
+                let message = "Exported \(clipboardItems.count) items to \(url.relativePath)"
+                Log.log(message)
+                return .success(message)
+            } catch {
+                let errorMessage = "Error exporting JSON to \(url.relativePath): \(error.localizedDescription)"
+                Log.log(errorMessage)
+                return .failure(errorMessage)
+            }
+        }
+        return .failure("No file selected for export")
+    }
+
+    func importJSON(shouldMerge: Bool = false) -> FileOperationResult {
+        let panel = NSOpenPanel()
+        panel.allowedContentTypes = [.json]
+        panel.allowsMultipleSelection = false
+        panel.canChooseDirectories = false
+        panel.title = "Import Clipboard Items"
+
+        if panel.runModal() == .OK, let url = panel.url {
+            do {
+                let data = try Data(contentsOf: url)
+                let decoder = JSONDecoder()
+                decoder.dateDecodingStrategy = .custom { decoder in
+                    let container = try decoder.singleValueContainer()
+                    let dateString = try container.decode(String.self)
+                    let date = Date.loadFormatedWithString(dateString: dateString)
+                    if let date {
+                        return date
+                    }
+                    throw DecodingError.dataCorruptedError(
+                        in: container,
+                        debugDescription: "Invalid date format"
+                    )
+                }
+                let importedItems = try decoder.decode([ClipboardItem].self, from: data)
+
+                if shouldMerge {
+                    var combinedItems = clipboardItems
+                    for importedItem in importedItems {
+                        let isDuplicate = combinedItems.contains { existingItem in
+                            if existingItem.timestamp == importedItem.timestamp {
+                                switch (existingItem.content, importedItem.content) {
+                                case let (.text(existingText), .text(importedText)):
+                                    return existingText == importedText
+                                case let (.image(existingData), .image(importedData)):
+                                    return existingData == importedData
+                                default:
+                                    return false
+                                }
+                            }
+                            return false
+                        }
+                        if !isDuplicate {
+                            combinedItems.append(importedItem)
+                        }
+                    }
+
+                    clipboardItems = Array(
+                        combinedItems
+                            .sorted(by: { $0.timestamp > $1.timestamp })
+                            .prefix(AppConst.numberOfItems)
+                    )
+
+                    saveItems()
+                    let newItemCount = importedItems.count - (combinedItems.count - clipboardItems.count)
+                    let message = "Merged \(newItemCount) new items from \(url.relativePath)"
+                    Log.log(message)
+                    return .success(message)
+                } else {
+                    clipboardItems = Array(
+                        importedItems
+                            .sorted(by: { $0.timestamp > $1.timestamp })
+                            .prefix(AppConst.numberOfItems)
+                    )
+
+                    saveItems()
+                    let message = "Imported \(clipboardItems.count) items from \(url.relativePath)"
+                    Log.log(message)
+                    return .success(message)
+                }
+            } catch {
+                let errorMessage = "Error importing JSON from \(url.relativePath): \(error.localizedDescription)"
+                Log.log(errorMessage)
+                return .failure(errorMessage)
+            }
+        }
+        return .failure("No file selected for import")
     }
 }

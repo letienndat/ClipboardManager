@@ -7,41 +7,119 @@
 
 import SwiftUI
 
+// swiftlint:disable closure_body_length
 struct ContentView: View {
     @StateObject private var clipboardManager = ClipboardManager()
     @EnvironmentObject var popoverManager: PopoverManager
+    @State private var showAlert = false
+    @State private var alertMessage = ""
+    @State private var alertIsError = false
 
     var body: some View {
-        ScrollView {
-            LazyVStack(spacing: 12) {
-                ForEach(
-                    Array(clipboardManager.clipboardItems),
-                    id: \.id
-                ) { item in
-                    ExpandableTextView(
-                        item: item,
-                        onCopy: {
-                            clipboardManager.copyItem(item)
-                        },
-                        popoverManager: popoverManager
-                    )
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding()
-                    .background(Color.white)
-                    .cornerRadius(12)
-                    .shadow(color: .black.opacity(0.05), radius: 5, x: 0, y: 2)
+        VStack {
+            HStack(spacing: 10) {
+                Text("Total: \(clipboardManager.clipboardItems.count) items")
+
+                Menu("Import JSON") {
+                    Button("Overwrite") {
+                        let result = clipboardManager.importJSON()
+                        switch result {
+                        case .success(let message):
+                            alertMessage = message
+                            alertIsError = false
+                        case .failure(let message):
+                            alertMessage = message
+                            alertIsError = true
+                        }
+                        showAlert = true
+                    }
+                    Button("Merge") {
+                        let result = clipboardManager.importJSON(
+                            shouldMerge: true)
+                        switch result {
+                        case .success(let message):
+                            alertMessage = message
+                            alertIsError = false
+                        case .failure(let message):
+                            alertMessage = message
+                            alertIsError = true
+                        }
+                        showAlert = true
+                    }
+                }
+
+                Button("Export JSON") {
+                    let result = clipboardManager.exportJSON()
+                    switch result {
+                    case .success(let message):
+                        alertMessage = message
+                        alertIsError = false
+                    case .failure(let message):
+                        alertMessage = message
+                        alertIsError = true
+                    }
+                    showAlert = true
+                }
+
+                Button("Refresh") {
+                    let result = clipboardManager.loadItems()
+                    switch result {
+                    case .success(let message):
+                        alertMessage = message
+                        alertIsError = false
+                    case .failure(let message):
+                        alertMessage = message
+                        alertIsError = true
+                    }
+                    showAlert = true
                 }
             }
-            .padding()
+            .padding(.trailing)
+
+            ScrollView {
+                LazyVStack(spacing: 12) {
+                    ForEach(
+                        Array(clipboardManager.clipboardItems),
+                        id: \.id
+                    ) { item in
+                        ExpandableTextView(
+                            item: item,
+                            onCopy: {
+                                clipboardManager.copyItem(item)
+                            },
+                            popoverManager: popoverManager
+                        )
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding()
+                        .background(Color.white)
+                        .cornerRadius(12)
+                        .shadow(
+                            color: .black.opacity(0.05), radius: 5, x: 0, y: 2)
+                    }
+                }
+            }
+            .overlay(
+                Text("No items").opacity(
+                    clipboardManager.clipboardItems.isEmpty ? 1 : 0)
+            )
+            .frame(minWidth: 500, minHeight: 400)
+            .padding(.bottom)
         }
-        .overlay(
-            Text("No items").opacity(
-                clipboardManager.clipboardItems.isEmpty ? 1 : 0)
-        )
+        .padding([.top, .leading])
         .background(Color.gray.opacity(0.2))
-        .frame(minWidth: 500, minHeight: 400)
+        .alert(isPresented: $showAlert) {
+            Alert(
+                title: Text(
+                    alertIsError ? "Error" : "Success"),
+                message: Text(alertMessage),
+                dismissButton: .default(Text("OK")) {
+                    showAlert = false
+                }
+            )
+        }
     }
 }
+// swiftlint:enable closure_body_length
 
 struct ExpandableTextView: View {
     let item: ClipboardItem

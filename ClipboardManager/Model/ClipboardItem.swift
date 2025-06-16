@@ -53,20 +53,36 @@ struct ClipboardItem: Identifiable, Codable {
     }
 
     enum CodingKeys: String, CodingKey {
-        case id, content, timestamp
+        case content, timestamp
     }
 
     init(content: Any, timestamp: Date = Date()) {
         self.id = UUID()
         self.timestamp = timestamp
+        // swiftlint:disable opening_brace
         if let string = content as? String {
             self.content = .text(string)
         } else if let image = content as? NSImage,
-            let data = image.tiffRepresentation {
+            let data = image.tiffRepresentation
+        {
             self.content = .image(data)
         } else {
             self.content = .text("")
         }
+        // swiftlint:enable opening_brace
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(content, forKey: .content)
+        try container.encode(timestamp, forKey: .timestamp)
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.id = UUID()
+        self.content = try container.decode(ContentType.self, forKey: .content)
+        self.timestamp = try container.decode(Date.self, forKey: .timestamp)
     }
 
     mutating func updateTimestamp(_ newDate: Date) {
