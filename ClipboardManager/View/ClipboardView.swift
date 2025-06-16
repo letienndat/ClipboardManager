@@ -49,10 +49,25 @@ struct ExpandableTextView: View {
     @ObservedObject var popoverManager: PopoverManager
 
     var body: some View {
-        HStack(spacing: 5) {
+        VStack {
+            HStack {
+                Text(item.timestamp.description)
+                    .font(.system(size: 11))
+                    .foregroundColor(.gray)
+
+                Spacer(minLength: 10)
+
+                Button("Copy") {
+                    onCopy()
+                    popoverManager.closePopover()
+                }
+            }
             if let text = item.content as? String {
                 Text(text)
                     .lineLimit(5)
+                    .font(.system(size: 13))
+                    .foregroundColor(.black)
+                    .textSelection(.enabled)
                     .truncationMode(.tail)
                     .frame(maxWidth: .infinity, alignment: .leading)
             } else if let image = item.content as? NSImage {
@@ -63,15 +78,6 @@ struct ExpandableTextView: View {
                         maxWidth: .infinity, alignment: .leading
                     )
                     .shadow(color: .black.opacity(0.2), radius: 5, x: 0, y: 0)
-            }
-
-            Spacer()
-            VStack {
-                Button("Copy") {
-                    onCopy()
-                    popoverManager.closePopover()
-                }
-                Spacer()
             }
         }
         .frame(maxWidth: .infinity, maxHeight: 200)

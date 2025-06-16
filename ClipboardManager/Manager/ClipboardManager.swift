@@ -6,7 +6,6 @@
 //
 
 import AppKit
-import Combine
 import UniformTypeIdentifiers
 
 class ClipboardManager: ObservableObject {
