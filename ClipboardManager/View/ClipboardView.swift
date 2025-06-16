@@ -48,10 +48,17 @@ struct ExpandableTextView: View {
     let onCopy: () -> Void
     @ObservedObject var popoverManager: PopoverManager
 
+    private let dateFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "HH:mm:ss dd:MM:yyyy"
+        formatter.timeZone = TimeZone.current
+        return formatter
+    }()
+
     var body: some View {
         VStack {
             HStack {
-                Text(item.timestamp.description)
+                Text(dateFormatter.string(from: item.timestamp))
                     .font(.system(size: 11))
                     .foregroundColor(.gray)
 
@@ -62,7 +69,8 @@ struct ExpandableTextView: View {
                     popoverManager.closePopover()
                 }
             }
-            if let text = item.content as? String {
+            switch item.content {
+            case .text(let text):
                 Text(text)
                     .lineLimit(5)
                     .font(.system(size: 13))
@@ -70,14 +78,15 @@ struct ExpandableTextView: View {
                     .textSelection(.enabled)
                     .truncationMode(.tail)
                     .frame(maxWidth: .infinity, alignment: .leading)
-            } else if let image = item.content as? NSImage {
-                Image(nsImage: image)
-                    .resizable()
-                    .scaledToFit()
-                    .frame(
-                        maxWidth: .infinity, alignment: .leading
-                    )
-                    .shadow(color: .black.opacity(0.2), radius: 5, x: 0, y: 0)
+            case .image(let data):
+                if let image = NSImage(data: data) {
+                    Image(nsImage: image)
+                        .resizable()
+                        .scaledToFit()
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .shadow(
+                            color: .black.opacity(0.2), radius: 5, x: 0, y: 0)
+                }
             }
         }
         .frame(maxWidth: .infinity, maxHeight: 200)
