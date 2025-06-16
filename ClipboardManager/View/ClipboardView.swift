@@ -50,7 +50,7 @@ struct ExpandableTextView: View {
 
     private let dateFormatter: DateFormatter = {
         let formatter = DateFormatter()
-        formatter.dateFormat = "HH:mm:ss dd:MM:yyyy"
+        formatter.dateFormat = "HH:mm:ss dd/MM/yyyy"
         formatter.timeZone = TimeZone.current
         return formatter
     }()

@@ -11,7 +11,7 @@ import Foundation
 struct ClipboardItem: Identifiable, Codable {
     let id: UUID
     let content: ContentType
-    let timestamp: Date
+    var timestamp: Date
 
     enum ContentType: Codable {
         case text(String)
@@ -70,6 +70,6 @@ struct ClipboardItem: Identifiable, Codable {
     }
 
     mutating func updateTimestamp(_ newDate: Date) {
-        self = ClipboardItem(content: content, timestamp: newDate)
+        self.timestamp = newDate
     }
 }
