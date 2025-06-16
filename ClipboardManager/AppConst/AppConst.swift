@@ -12,4 +12,5 @@ struct AppConst {
     public static let jsonFileName = "clipboard.json"
     public static let logFileName = "clipboard_manager.log"
     public static let numberOfItems = 30
+    public static let maxDimensionPixel: CGFloat = 1_000
 }

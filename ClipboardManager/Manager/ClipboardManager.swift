@@ -190,6 +190,20 @@ class ClipboardManager: ObservableObject {
         }
     }
 
+    func deleteItem(id: UUID) -> FileOperationResult {
+        if let index = clipboardItems.firstIndex(where: { $0.id == id }) {
+            clipboardItems.remove(at: index)
+            saveItems()
+            let message = "Deleted item with ID \(id) from clipboard"
+            Log.log(message)
+            return .success(message)
+        } else {
+            let errorMessage = "Failed to delete item: No item found with ID \(id)"
+            Log.log(errorMessage)
+            return .failure(errorMessage)
+        }
+    }
+
     @discardableResult
     func loadItems() -> FileOperationResult {
         do {

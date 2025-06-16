@@ -59,17 +59,15 @@ struct ClipboardItem: Identifiable, Codable {
     init(content: Any, timestamp: Date = Date()) {
         self.id = UUID()
         self.timestamp = timestamp
-        // swiftlint:disable opening_brace
         if let string = content as? String {
             self.content = .text(string)
         } else if let image = content as? NSImage,
-            let data = image.tiffRepresentation
-        {
+                  let resized = image.resizedToFit(maxDimension: AppConst.maxDimensionPixel),
+                  let data = resized.jpegData(compression: 0.6) {
             self.content = .image(data)
         } else {
             self.content = .text("")
         }
-        // swiftlint:enable opening_brace
     }
 
     func encode(to encoder: Encoder) throws {
