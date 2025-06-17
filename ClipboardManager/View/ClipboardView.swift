@@ -144,7 +144,6 @@ struct ContentView: View {
         }
     }
 }
-// swiftlint:enable closure_body_length
 
 struct ExpandableTextView: View {
     let item: ClipboardItem
@@ -187,6 +186,11 @@ struct ExpandableTextView: View {
                     }
                 }
             }
+
+            Rectangle()
+                .frame(height: 1)
+                .foregroundColor(Color.gray.opacity(0.3))
+
             switch item.content {
             case .text(let text):
                 Text(text)
@@ -210,3 +214,4 @@ struct ExpandableTextView: View {
         .frame(maxWidth: .infinity, maxHeight: 200)
     }
 }
+// swiftlint:enable closure_body_length
