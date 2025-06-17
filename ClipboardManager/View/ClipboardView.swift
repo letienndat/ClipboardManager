@@ -150,7 +150,6 @@ struct ExpandableTextView: View {
     let onCopy: () -> Void
     let onDelete: () -> Void
     @ObservedObject var popoverManager: PopoverManager
-    @State private var showDeleteConfirmation = false
 
     var body: some View {
         VStack {
@@ -170,20 +169,10 @@ struct ExpandableTextView: View {
                     .tint(Color.blue)
 
                     Button("Remove") {
-                        showDeleteConfirmation = true
+                        onDelete()
                     }
                     .buttonStyle(.borderedProminent)
                     .tint(Color.red)
-                    .alert(isPresented: $showDeleteConfirmation) {
-                        Alert(
-                            title: Text("Confirm Delete"),
-                            message: Text("Are you sure you want to delete this item?"),
-                            primaryButton: .destructive(Text("Delete")) {
-                                onDelete()
-                            },
-                            secondaryButton: .cancel()
-                        )
-                    }
                 }
             }
 

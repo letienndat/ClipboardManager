@@ -183,11 +183,6 @@ class ClipboardManager: ObservableObject {
         }
 
         saveItems()
-
-        if clipboardItems.count > AppConst.numberOfItems {
-            clipboardItems.removeLast(
-                clipboardItems.count - AppConst.numberOfItems)
-        }
     }
 
     func deleteItem(id: UUID) -> FileOperationResult {
@@ -261,6 +256,12 @@ class ClipboardManager: ObservableObject {
             }
 
             encoder.outputFormatting = .prettyPrinted
+
+            if clipboardItems.count > AppConst.numberOfItems {
+                clipboardItems.removeLast(
+                    clipboardItems.count - AppConst.numberOfItems)
+            }
+
             let data = try encoder.encode(clipboardItems)
             try data.write(to: fileJSONURL, options: .atomic)
 
