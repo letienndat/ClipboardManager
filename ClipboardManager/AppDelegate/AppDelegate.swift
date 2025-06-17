@@ -44,8 +44,13 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                 popover.performClose(nil)
                 popoverManager.isShown = false
             } else {
+                NSApp.activate(ignoringOtherApps: true)
+
                 popover.show(
-                    relativeTo: button.bounds, of: button, preferredEdge: .minY)
+                    relativeTo: button.bounds,
+                    of: button,
+                    preferredEdge: .minY
+                )
                 popoverManager.isShown = true
             }
         }

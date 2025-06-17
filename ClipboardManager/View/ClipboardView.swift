@@ -110,6 +110,7 @@ struct ContentView: View {
                             .id(item.id)
                         }
                     }
+                    .padding(.trailing)
                 }
                 .overlay(
                     Text("No items")
@@ -152,17 +153,10 @@ struct ExpandableTextView: View {
     @ObservedObject var popoverManager: PopoverManager
     @State private var showDeleteConfirmation = false
 
-    private let dateFormatter: DateFormatter = {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "HH:mm:ss dd/MM/yyyy"
-        formatter.timeZone = TimeZone.current
-        return formatter
-    }()
-
     var body: some View {
         VStack {
             HStack {
-                Text(dateFormatter.string(from: item.timestamp))
+                Text(item.timestamp.formatToString())
                     .font(.system(size: 11))
                     .foregroundColor(.gray)
 
