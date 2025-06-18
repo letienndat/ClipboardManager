@@ -1,16 +1,15 @@
 //
 //  ClipboardView.swift
-//  ClipboardManager
+//  viewModel
 //
 //  Created by Le Tien Dat on 6/13/25.
 //
 
 import SwiftUI
 
-// swiftlint:disable closure_body_length
-struct ContentView: View {
-    @StateObject private var clipboardManager = ClipboardManager()
+struct ClipboardView: View {
     @EnvironmentObject var popoverManager: PopoverManager
+    @ObservedObject var viewModel: ClipboardViewModel
     @State private var showAlert = false
     @State private var alertMessage = ""
     @State private var alertIsError = false
@@ -18,134 +17,116 @@ struct ContentView: View {
 
     var body: some View {
         VStack {
-            HStack(spacing: 10) {
-                Text("Total: \(clipboardManager.clipboardItems.count) items (max: \(AppConst.numberOfItems))")
-
-                Menu("Import JSON") {
-                    Button("Overwrite") {
-                        let result = clipboardManager.importJSON()
-                        switch result {
-                        case .success(let message):
-                            alertMessage = message
-                            alertIsError = false
-                        case .failure(let message):
-                            alertMessage = message
-                            alertIsError = true
-                        }
-                        showAlert = true
-                    }
-                    Button("Merge") {
-                        let result = clipboardManager.importJSON(
-                            shouldMerge: true)
-                        switch result {
-                        case .success(let message):
-                            alertMessage = message
-                            alertIsError = false
-                        case .failure(let message):
-                            alertMessage = message
-                            alertIsError = true
-                        }
-                        showAlert = true
-                    }
-                }
-
-                Button("Export JSON") {
-                    let result = clipboardManager.exportJSON()
-                    switch result {
-                    case .success(let message):
-                        alertMessage = message
-                        alertIsError = false
-                    case .failure(let message):
-                        alertMessage = message
-                        alertIsError = true
-                    }
-                    showAlert = true
-                }
-
-                Button("Refresh") {
-                    let result = clipboardManager.loadItems()
-                    switch result {
-                    case .success(let message):
-                        alertMessage = message
-                        alertIsError = false
-                        scrollToTopTrigger.toggle()
-                    case .failure(let message):
-                        alertMessage = message
-                        alertIsError = true
-                    }
-                    showAlert = true
-                }
-            }
-            .padding(.trailing)
-
-            ScrollViewReader { scrollProxy in
-                ScrollView {
-                    LazyVStack(spacing: 12) {
-                        ForEach(Array(clipboardManager.clipboardItems), id: \.id) { item in
-                            ExpandableTextView(
-                                item: item,
-                                onCopy: {
-                                    clipboardManager.copyItem(item)
-                                },
-                                onDelete: {
-                                    let result = clipboardManager.deleteItem(id: item.id)
-                                    switch result {
-                                    case .success(let message):
-                                        alertMessage = message
-                                        alertIsError = false
-                                    case .failure(let message):
-                                        alertMessage = message
-                                        alertIsError = true
-                                    }
-                                    showAlert = true
-                                    popoverManager.closePopover()
-                                },
-                                popoverManager: popoverManager
-                            )
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .padding()
-                            .background(Color.white)
-                            .cornerRadius(12)
-                            .shadow(color: .black.opacity(0.05), radius: 5, x: 0, y: 2)
-                            .id(item.id)
-                        }
-                    }
-                    .padding(.trailing)
-                }
-                .overlay(
-                    Text("No items")
-                        .opacity(clipboardManager.clipboardItems.isEmpty ? 1 : 0)
-                )
-                .frame(minWidth: 500, minHeight: 400)
-                .padding(.bottom)
-                .onChange(of: scrollToTopTrigger) { _ in
-                    if let first = clipboardManager.clipboardItems.first {
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                            scrollProxy.scrollTo(first.id, anchor: .top)
-                        }
-                    }
-                }
-                .onAppear {
-                    self.scrollToTopTrigger.toggle()
-                }
-            }
+            headerView
+            scrollableContentView
         }
         .padding([.top, .leading])
         .background(Color.gray.opacity(0.2))
         .alert(isPresented: $showAlert) {
             Alert(
-                title: Text(
-                    alertIsError ? "Error" : "Success"),
+                title: Text(alertIsError ? "Error" : "Success"),
                 message: Text(alertMessage),
                 dismissButton: .default(Text("OK")) {
                     showAlert = false
                 }
             )
         }
+        .onReceive(NotificationCenter.default.publisher(for: .clipboardOperationResult)) { notification in
+            if let result = notification.object as? FileOperationResult {
+                handleResult(result)
+            }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .loadItemsFromClipboard)) { notification in
+            if let result = notification.object as? FileOperationResult {
+                handleResult(result)
+                if case .success = result {
+                    scrollToTopTrigger.toggle()
+                }
+            }
+        }
+    }
+
+    private var headerView: some View {
+        HStack(spacing: 10) {
+            Text("Total: \(viewModel.clipboardItems.count) items (max: \(AppConst.numberOfItems))")
+            importJSONMenu
+            Button("Export JSON") { viewModel.exportJSON() }
+            Button("Refresh") { viewModel.loadItems() }
+        }
+        .padding(.trailing)
+    }
+
+    private var importJSONMenu: some View {
+        Menu("Import JSON") {
+            Button("Overwrite") { viewModel.importJSON() }
+            Button("Merge") { viewModel.importJSON(shouldMerge: true) }
+        }
+    }
+
+    private var scrollableContentView: some View {
+        ScrollViewReader { scrollProxy in
+            ScrollView {
+                LazyVStack(spacing: 12) {
+                    itemsListView()
+                }
+                .padding(.trailing)
+            }
+            .overlay(emptyStateView() )
+            .frame(minWidth: 500, minHeight: 400)
+            .padding(.bottom)
+            .onChange(of: scrollToTopTrigger) { _ in
+                scrollToTop(scrollProxy)
+            }
+            .onAppear {
+                scrollToTopTrigger.toggle()
+            }
+        }
+    }
+
+    private func itemsListView() -> some View {
+        ForEach(Array(viewModel.clipboardItems), id: \.id) { item in
+            ClipboardItemView(
+                item: item,
+                onCopy: { viewModel.copyItem(item) },
+                onDelete: {
+                    viewModel.deleteItem(id: item.id)
+                },
+                popoverManager: popoverManager
+            )
+            .itemCard()
+            .id(item.id)
+        }
+    }
+
+    private func emptyStateView() -> some View {
+        Text("No items")
+            .opacity(viewModel.clipboardItems.isEmpty ? 1 : 0)
+    }
+
+    private func scrollToTop(_ scrollProxy: ScrollViewProxy) {
+        if let first = viewModel.clipboardItems.first {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                scrollProxy.scrollTo(first.id, anchor: .top)
+            }
+        }
+    }
+
+    private func handleResult(_ result: FileOperationResult) {
+        switch result {
+        case .success(let message):
+            alertMessage = message
+            alertIsError = false
+            Log.log(message)
+        case .failure(let message):
+            alertMessage = message
+            alertIsError = true
+            Log.log(message)
+        }
+        showAlert = true
     }
 }
 
-struct ExpandableTextView: View {
+struct ClipboardItemView: View {
     let item: ClipboardItem
     let onCopy: () -> Void
     let onDelete: () -> Void
@@ -203,4 +184,3 @@ struct ExpandableTextView: View {
         .frame(maxWidth: .infinity, maxHeight: 200)
     }
 }
-// swiftlint:enable closure_body_length

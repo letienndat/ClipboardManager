@@ -10,12 +10,8 @@ import SwiftUI
 @main
 struct ClipboardManagerApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
-    @StateObject private var popoverManager = PopoverManager()
 
     var body: some Scene {
-        WindowGroup {
-            ContentView()
-                .environmentObject(popoverManager)
-        }
+        Settings {}
     }
 }

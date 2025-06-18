@@ -1,8 +1,8 @@
 //
-//  ClipboardManager.swift
+//  ClipboardViewModel.swift
 //  ClipboardManager
 //
-//  Created by Le Tien Dat on 6/13/25.
+//  Created by Le Tien Dat on 6/18/25.
 //
 
 import AppKit
@@ -13,7 +13,7 @@ enum FileOperationResult {
     case failure(String)
 }
 
-class ClipboardManager: ObservableObject {
+class ClipboardViewModel: ObservableObject {
     @Published var clipboardItems: [ClipboardItem] = []
     private var timer: Timer?
     private var lastChangeCount: Int = 0
@@ -21,17 +21,7 @@ class ClipboardManager: ObservableObject {
     private let pasteboard = NSPasteboard.general
     private var lastContent: String?
     private var justSetClipboard = false
-
-    // Folder path ~/ClipboardManager/
-    private var clipboardDirURL: URL {
-        FileManager.default.homeDirectoryForCurrentUser
-            .appendingPathComponent(AppConst.clipboardDirName)
-    }
-
-    // File path file clipboard.json
-    private  var fileJSONURL: URL {
-        clipboardDirURL.appendingPathComponent(AppConst.jsonFileName)
-    }
+    private let appManager = AppManager.shared
 
     init() {
         setupClipboardDirectory()
@@ -43,16 +33,17 @@ class ClipboardManager: ObservableObject {
     private func setupClipboardDirectory() {
         let fileManager = FileManager.default
         do {
-            if !fileManager.fileExists(atPath: clipboardDirURL.path) {
+            if !fileManager.fileExists(atPath: appManager.clipboardDirURL.path) {
                 try fileManager.createDirectory(
-                    at: clipboardDirURL,
+                    at: appManager.clipboardDirURL,
                     withIntermediateDirectories: true,
                     attributes: nil
                 )
-                Log.log("Created directory: \(clipboardDirURL.path)")
+                Log.log("Created directory: \(appManager.clipboardDirURL.path)")
             }
         } catch {
-            Log.log("Error creating directory \(clipboardDirURL.path): \(error)")
+            Log.log(
+                "Error creating directory \(appManager.clipboardDirURL.path): \(error)")
         }
     }
 
@@ -158,8 +149,7 @@ class ClipboardManager: ObservableObject {
                     self.justSetClipboard = true
 
                     if let index = clipboardItems.firstIndex(where: { existingItem in
-                        if case .image(let existingData) = existingItem.content
-                        {
+                        if case .image(let existingData) = existingItem.content {
                             return existingData == data
                         }
                         return false
@@ -185,32 +175,33 @@ class ClipboardManager: ObservableObject {
         saveItems()
     }
 
-    func deleteItem(id: UUID) -> FileOperationResult {
+    func deleteItem(id: UUID) {
         if let index = clipboardItems.firstIndex(where: { $0.id == id }) {
             clipboardItems.remove(at: index)
             saveItems()
             let message = "Deleted item with ID \(id) from clipboard"
             Log.log(message)
-            return .success(message)
+            postResult(.success(message))
         } else {
-            let errorMessage = "Failed to delete item: No item found with ID \(id)"
+            let errorMessage =
+                "Failed to delete item: No item found with ID \(id)"
             Log.log(errorMessage)
-            return .failure(errorMessage)
+            postResult(.failure(errorMessage))
         }
     }
 
-    @discardableResult
-    func loadItems() -> FileOperationResult {
+    func loadItems() {
         do {
-            if FileManager.default.fileExists(atPath: fileJSONURL.path) {
-                let data = try Data(contentsOf: fileJSONURL)
+            if FileManager.default.fileExists(atPath: appManager.fileJSONURL.path) {
+                let data = try Data(contentsOf: appManager.fileJSONURL)
                 let decoder = JSONDecoder()
 
                 decoder.dateDecodingStrategy = .custom { decoder in
                     let container = try decoder.singleValueContainer()
                     let dateString = try container.decode(String.self)
 
-                    let date = Date.loadFormatedWithString(dateString: dateString)
+                    let date = Date.loadFormatedWithString(
+                        dateString: dateString)
                     if let date {
                         return date
                     }
@@ -221,26 +212,32 @@ class ClipboardManager: ObservableObject {
                     )
                 }
 
-                var clipboardItemsLoaded = try decoder.decode([ClipboardItem].self, from: data).sorted(by: { $0.timestamp > $1.timestamp })
+                var clipboardItemsLoaded = try decoder.decode(
+                    [ClipboardItem].self, from: data
+                )
+                    .sorted(by: { $0.timestamp > $1.timestamp })
                 if clipboardItemsLoaded.count > AppConst.numberOfItems {
                     clipboardItemsLoaded.removeLast(
                         clipboardItemsLoaded.count - AppConst.numberOfItems)
                 }
                 self.clipboardItems = clipboardItemsLoaded
-                let message = "Loaded \(clipboardItems.count) items from \(fileJSONURL.relativePath)"
+                let message =
+                "Loaded \(clipboardItems.count) items from \(appManager.fileJSONURL.relativePath)"
                 Log.log(message)
-                return .success(message)
+                postResult(.success(message))
             } else {
                 self.clipboardItems = []
-                let message = "No JSON file found at \(fileJSONURL.relativePath)"
+                let message =
+                "No JSON file found at \(appManager.fileJSONURL.relativePath)"
                 Log.log(message)
-                return .success(message)
+                postResult(.success(message))
             }
         } catch {
-            let errorMessage = "Error loading JSON from \(fileJSONURL.relativePath): \(error.localizedDescription)"
+            let errorMessage =
+            "Error loading JSON from \(appManager.fileJSONURL.relativePath): \(error.localizedDescription)"
             Log.log(errorMessage)
             self.clipboardItems = []
-            return .failure(errorMessage)
+            postResult(.failure(errorMessage))
         }
     }
 
@@ -263,7 +260,7 @@ class ClipboardManager: ObservableObject {
             }
 
             let data = try encoder.encode(clipboardItems)
-            try data.write(to: fileJSONURL, options: .atomic)
+            try data.write(to: appManager.fileJSONURL, options: .atomic)
 
             Log.log("Saved \(clipboardItems.count) items to JSON")
         } catch {
@@ -271,7 +268,7 @@ class ClipboardManager: ObservableObject {
         }
     }
 
-    func exportJSON() -> FileOperationResult {
+    func exportJSON() {
         let panel = NSSavePanel()
         panel.allowedContentTypes = [.json]
         panel.nameFieldStringValue = "clipboard_export.json"
@@ -290,19 +287,22 @@ class ClipboardManager: ObservableObject {
                 encoder.outputFormatting = .prettyPrinted
                 let data = try encoder.encode(clipboardItems)
                 try data.write(to: url, options: .atomic)
-                let message = "Exported \(clipboardItems.count) items to \(url.relativePath)"
+                let message =
+                    "Exported \(clipboardItems.count) items to \(url.relativePath)"
                 Log.log(message)
-                return .success(message)
+                postResult(.success(message))
             } catch {
-                let errorMessage = "Error exporting JSON to \(url.relativePath): \(error.localizedDescription)"
+                let errorMessage =
+                    "Error exporting JSON to \(url.relativePath): \(error.localizedDescription)"
                 Log.log(errorMessage)
-                return .failure(errorMessage)
+                postResult(.failure(errorMessage))
             }
+        } else {
+            postResult(.failure("No file selected for export"))
         }
-        return .failure("No file selected for export")
     }
 
-    func importJSON(shouldMerge: Bool = false) -> FileOperationResult {
+    func importJSON(shouldMerge: Bool = false) {
         let panel = NSOpenPanel()
         panel.allowedContentTypes = [.json]
         panel.allowsMultipleSelection = false
@@ -316,7 +316,8 @@ class ClipboardManager: ObservableObject {
                 decoder.dateDecodingStrategy = .custom { decoder in
                     let container = try decoder.singleValueContainer()
                     let dateString = try container.decode(String.self)
-                    let date = Date.loadFormatedWithString(dateString: dateString)
+                    let date = Date.loadFormatedWithString(
+                        dateString: dateString)
                     if let date {
                         return date
                     }
@@ -325,17 +326,24 @@ class ClipboardManager: ObservableObject {
                         debugDescription: "Invalid date format"
                     )
                 }
-                let importedItems = try decoder.decode([ClipboardItem].self, from: data)
+                let importedItems = try decoder.decode(
+                    [ClipboardItem].self, from: data)
 
                 if shouldMerge {
                     var combinedItems = clipboardItems
                     for importedItem in importedItems {
                         let isDuplicate = combinedItems.contains { existingItem in
                             if existingItem.timestamp == importedItem.timestamp {
-                                switch (existingItem.content, importedItem.content) {
-                                case let (.text(existingText), .text(importedText)):
+                                switch (
+                                    existingItem.content, importedItem.content
+                                ) {
+                                case let (
+                                    .text(existingText), .text(importedText)
+                                ):
                                     return existingText == importedText
-                                case let (.image(existingData), .image(importedData)):
+                                case let (
+                                    .image(existingData), .image(importedData)
+                                ):
                                     return existingData == importedData
                                 default:
                                     return false
@@ -355,10 +363,13 @@ class ClipboardManager: ObservableObject {
                     )
 
                     saveItems()
-                    let newItemCount = importedItems.count - (combinedItems.count - clipboardItems.count)
-                    let message = "Merged \(newItemCount) new items from \(url.relativePath)"
+                    let newItemCount =
+                        importedItems.count
+                        - (combinedItems.count - clipboardItems.count)
+                    let message =
+                        "Merged \(newItemCount) new items from \(url.relativePath)"
                     Log.log(message)
-                    return .success(message)
+                    postResult(.success(message))
                 } else {
                     clipboardItems = Array(
                         importedItems
@@ -367,16 +378,23 @@ class ClipboardManager: ObservableObject {
                     )
 
                     saveItems()
-                    let message = "Imported \(clipboardItems.count) items from \(url.relativePath)"
+                    let message =
+                        "Imported \(clipboardItems.count) items from \(url.relativePath)"
                     Log.log(message)
-                    return .success(message)
+                    postResult(.success(message))
                 }
             } catch {
-                let errorMessage = "Error importing JSON from \(url.relativePath): \(error.localizedDescription)"
+                let errorMessage =
+                    "Error importing JSON from \(url.relativePath): \(error.localizedDescription)"
                 Log.log(errorMessage)
-                return .failure(errorMessage)
+                postResult(.failure(errorMessage))
             }
+        } else {
+            postResult(.failure("No file selected for import"))
         }
-        return .failure("No file selected for import")
     }
+}
+
+private func postResult(_ result: FileOperationResult) {
+    NotificationCenter.default.post(name: .clipboardOperationResult, object: result)
 }
